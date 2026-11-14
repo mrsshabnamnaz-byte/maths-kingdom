@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Math Kingdom — Save the Princess</title>
+<style>
+  :root{
+    --bg-top:#1b1035;
+    --bg-bot:#3a1f5c;
+    --parchment:#fff8ea;
+    --parchment-edge:#e8d9b5;
+    --ink:#3a2a1a;
+    --gold:#f4b942;
+    --gold-dark:#c98a1e;
+    --grade1:#4caf6b;
+    --grade1-dark:#33804a;
+    --grade2:#3a8fd6;
+    --grade2-dark:#2467a3;
+    --grade3:#e0a92a;
+    --grade3-dark:#a97c14;
+    --grade4:#9b5de5;
+    --grade4-dark:#6c2fb0;
+    --danger:#e15656;
+    --success:#3fbf6c;
+    --card-shadow: 0 10px 0 rgba(0,0,0,0.25);
+  }
+  :root:not([data-theme="light"]){
+    /* dark is default look for this fantasy game already */
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;width:100%;height:100%;
+    font-family:'Baloo 2','Trebuchet MS','Segoe UI',sans-serif;
+    background: radial-gradient(ellipse at top, var(--bg-bot), var(--bg-top));
+    color:var(--ink);
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+  #stars-bg{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, #fff, transparent),
+      radial-gradient(2px 2px at 70% 10%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 40% 70%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 85% 60%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 10% 85%, #fff, transparent),
+      radial-gradient(2px 2px at 55% 45%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 90% 90%, #fff, transparent);
+    opacity:0.5;
+  }
+  #app{
+    position:relative;z-index:1;
+    max-width:720px;margin:0 auto;
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    padding:18px 16px 40px;
+  }
+  h1,h2,h3{margin:0 0 4px;}
+  .title-main{
+    text-align:center;color:#fff;
+    font-size:2.1rem;
+    text-shadow:0 3px 0 rgba(0,0,0,0.35);
+    letter-spacing:0.5px;
+    margin-top:6px;
+  }
+  .title-sub{
+    text-align:center;color:var(--gold);
+    font-size:1.15rem;font-weight:700;
+    margin-bottom:18px;
+  }
+  .castle-emoji{
+    text-align:center;font-size:3.2rem;
+    filter:drop-shadow(0 6px 6px rgba(0,0,0,0.4));
+    animation: floaty 3.5s ease-in-out infinite;
+  }
+  @keyframes floaty{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-8px);}
+  }
+  .panel{
+    background:var(--parchment);
+    border:4px solid var(--parchment-edge);
+    border-radius:22px;
+    box-shadow:var(--card-shadow);
+    padding:20px 18px;
+    margin-bottom:16px;
+  }
+  .grade-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;
+  }
+  .grade-btn{
+    border:none;border-radius:18px;padding:18px 10px;
+    font-size:1.05rem;font-weight:800;color:#fff;cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,0.25);
+    transition:transform .08s ease;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .grade-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,0.25);}
+  .grade-btn.g1{background:var(--grade1);}
+  .grade-btn.g2{background:var(--grade2);}
+  .grade-btn.g3{background:var(--grade3);}
+  .grade-btn.g4{background:var(--grade4);}
+  .grade-btn.selected{outline:4px solid var(--gold);}
+  .grade-icon{font-size:1.8rem;}
+  .big-btn{
+    display:block;width:100%;border:none;border-radius:16px;
+    padding:16px;font-size:1.15rem;font-weight:800;color:#fff;
+    background:linear-gradient(180deg,var(--gold),var(--gold-dark));
+    box-shadow:0 6px 0 #8a5f10;cursor:pointer;margin-top:8px;
+    transition:transform .08s ease;
+  }
+  .big-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #8a5f10;}
+  .big-btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .row-icons{
+    display:flex;justify-content:center;gap:18px;margin-top:14px;
+  }
+  .icon-toggle{
+    background:rgba(0,0,0,0.25);border:2px solid rgba(255,255,255,0.2);
+    color:#fff;border-radius:12px;padding:8px 12px;font-size:0.95rem;
+    cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:700;
+  }
+  .icon-toggle.off{opacity:0.5;}
+
+  /* HUD */
+  .hud{
+    display:flex;justify-content:space-between;align-items:center;
+    background:rgba(0,0,0,0.3);border-radius:16px;padding:10px 14px;margin-bottom:14px;
+    color:#fff;font-weight:800;
+  }
+  .hud .lives{color:#ff6b6b;}
+  .hud .stars{color:var(--gold);}
+  .hud .coins{color:#ffd76b;}
+  .hud-back{
+    background:rgba(255,255,255,0.15);border:none;color:#fff;
+    border-radius:10px;padding:6px 10px;cursor:pointer;font-weight:700;
+  }
+
+  /* Map */
+  .map-path{
+    display:flex;flex-direction:column;gap:14px;margin-top:10px;
+  }
+  .map-node{
+    display:flex;align-items:center;gap:14px;
+    background:var(--parchment);border:3px solid var(--parchment-edge);
+    border-radius:18px;padding:12px 14px;cursor:pointer;
+    box-shadow:0 5px 0 rgba(0,0,0,0.2);
+    transition:transform .08s ease;
+  }
+  .map-node:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,0.2);}
+  .map-node.locked{opacity:0.55;cursor:not-allowed;filter:grayscale(0.6);}
+  .map-node.locked:active{transform:none;}
+  .map-node .node-emoji{font-size:2.1rem;}
+  .map-node .node-info{flex:1;}
+  .map-node .node-title{font-weight:800;font-size:1.05rem;}
+  .map-node .node-sub{font-size:0.85rem;opacity:0.75;}
+  .map-node .node-stars{font-size:0.9rem;color:var(--gold-dark);font-weight:800;}
+  .lock-badge{font-size:1.3rem;}
+
+  /* Question card */
+  .guide-bubble{
+    display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;
+  }
+  .guide-emoji{font-size:2.2rem;flex-shrink:0;}
+  .bubble{
+    background:#fff;border-radius:16px;border:3px solid var(--parchment-edge);
+    padding:10px 14px;font-weight:700;color:var(--ink);position:relative;
+    flex:1;
+  }
+  .question-box{
+    text-align:center;font-size:1.6rem;font-weight:800;
+    background:linear-gradient(180deg,#fffef8,#fff2d0);
+    border:3px dashed var(--gold-dark);border-radius:16px;
+    padding:22px 12px;margin:14px 0;color:var(--ink);
+    letter-spacing:1px;
+  }
+  .options-grid{
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .option-btn{
+    border:none;border-radius:14px;padding:16px;font-size:1.15rem;
+    font-weight:800;cursor:pointer;color:#fff;
+    box-shadow:0 5px 0 rgba(0,0,0,0.25);
+    transition:transform .08s ease, background .2s ease;
+  }
+  .option-btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,0.25);}
+  .option-btn.blue{background:#3a8fd6;}
+  .option-btn.green{background:#4caf6b;}
+  .option-btn.red{background:#e0665f;}
+  .option-btn.correct{background:var(--success)!important;}
+  .option-btn.wrong{background:var(--danger)!important;}
+  .option-btn:disabled{cursor:default;}
+
+  .progress-dots{display:flex;justify-content:center;gap:6px;margin:10px 0 4px;}
+  .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.25);}
+  .dot.done{background:var(--gold);}
+  .dot.current{background:#fff;}
+
+  .shake{animation:shakeAnim .4s;}
+  @keyframes shakeAnim{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-10px);}
+    40%{transform:translateX(10px);}
+    60%{transform:translateX(-8px);}
+    80%{transform:translateX(8px);}
+  }
+  .pop{animation:popAnim .35s;}
+  @keyframes popAnim{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.06);}
+    100%{transform:scale(1);}
+  }
+
+  .center-text{text-align:center;}
+  .badge-display{font-size:4rem;text-align:center;margin:10px 0;}
+  .stat-row{
+    display:flex;justify-content:space-around;margin:16px 0;font-weight:800;
+  }
+  .stat-item{text-align:center;}
+  .stat-item .num{font-size:1.6rem;display:block;color:var(--gold-dark);}
+
+  footer{
+    text-align:center;color:rgba(255,255,255,0.55);font-size:0.8rem;
+    margin-top:auto;padding-top:22px;
+  }
+
+  .hidden{display:none!important;}
+
+  @media (max-width:400px){
+    .title-main{font-size:1.6rem;}
+    .question-box{font-size:1.3rem;}
+  }
+</style>
+</head>
+<body>
+<div id="stars-bg"></div>
+<div id="app"></div>
+
+<script>
+/* ============== STATE ============== */
+const LEVELS = [
+  {id:'village', title:'Number Village', emoji:'🏘️', color:'#4caf6b'},
+  {id:'addition', title:'Addition Forest', emoji:'🌳', color:'#3a8fd6'},
+  {id:'subtraction', title:'Subtraction Castle', emoji:'🏰', color:'#e0a92a'},
+  {id:'multiplication', title:'Multiplication Mountain', emoji:'⛰️', color:'#9b5de5'},
+  {id:'division', title:'Division Cave', emoji:'🕳️', color:'#5dade2'},
+  {id:'boss', title:'Final Boss Castle', emoji:'👹', color:'#e15656'},
+];
+const QUESTIONS_PER_LEVEL = 6;
+const BOSS_QUESTIONS = 8;
+
+let state = loadState();
+
+function defaultState(){
+  return {
+    grade: null,
+    unlocked: {village:true, addition:false, subtraction:false, multiplication:false, division:false, boss:false},
+    totalStars: 0,
+    totalCoins: 0,
+    sound: true,
+    music: false,
+    // in-run values
+    currentLevel: null,
+    qIndex: 0,
+    lives: 3,
+    levelStars: 0,
+    levelCoins: 0,
+    questions: [],
+  };
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem('mathKingdomState');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      return Object.assign(defaultState(), parsed);
+    }
+  }catch(e){}
+  return defaultState();
+}
+function saveState(){
+  try{
+    const toSave = {
+      grade: state.grade, unlocked: state.unlocked,
+      totalStars: state.totalStars, totalCoins: state.totalCoins,
+      sound: state.sound, music: state.music
+    };
+    localStorage.setItem('mathKingdomState', JSON.stringify(toSave));
+  }catch(e){}
+}
+
+/* ============== SOUND (Web Audio, synthesized) ============== */
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+  if(audioCtx && audioCtx.state === 'suspended'){ audioCtx.resume(); }
+}
+function beep(freq, dur, type, vol){
+  if(!state.sound || !audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type||'sine';
+  o.frequency.value = freq;
+  g.gain.value = vol!==undefined?vol:0.15;
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+  o.stop(audioCtx.currentTime + dur);
+}
+function playCorrect(){
+  ensureAudio();
+  beep(523,0.12,'sine'); setTimeout(()=>beep(659,0.12,'sine'),90); setTimeout(()=>beep(784,0.2,'sine'),180);
+}
+function playWrong(){
+  ensureAudio();
+  beep(180,0.25,'sawtooth',0.12);
+}
+function playClick(){ ensureAudio(); beep(400,0.06,'square',0.06); }
+function playFanfare(){
+  ensureAudio();
+  [523,659,784,1046].forEach((f,i)=> setTimeout(()=>beep(f,0.25,'triangle',0.16), i*150));
+}
+
+let musicNodes = null;
+function toggleMusicPlayback(){
+  ensureAudio();
+  if(state.music){
+    if(!audioCtx) return;
+    if(musicNodes) return;
+    const o1 = audioCtx.createOscillator();
+    const o2 = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o1.type='sine'; o2.type='sine';
+    o1.frequency.value=220; o2.frequency.value=277;
+    g.gain.value=0.02;
+    o1.connect(g); o2.connect(g); g.connect(audioCtx.destination);
+    o1.start(); o2.start();
+    musicNodes = {o1,o2,g};
+  } else {
+    if(musicNodes){
+      try{ musicNodes.o1.stop(); musicNodes.o2.stop(); }catch(e){}
+      musicNodes = null;
+    }
+  }
+}
+
+/* ============== QUESTION GENERATORS ============== */
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function shuffle(arr){ return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]); }
+
+function makeMCQ(promptText, correct, wrongPool){
+  // build 2 distinct wrong options from pool candidates
+  let wrongs = [];
+  let tries=0;
+  while(wrongs.length<2 && tries<30){
+    tries++;
+    const w = wrongPool();
+    if(w!==correct && !wrongs.includes(w) && w>=0){
+      wrongs.push(w);
+    }
+  }
+  while(wrongs.length<2){ wrongs.push(correct + (wrongs.length+1)*(Math.random()<0.5?-1:1)); }
+  const options = shuffle([correct, ...wrongs]);
+  return {
+    prompt: promptText,
+    options: options.map(String),
+    correctIndex: options.indexOf(correct),
+  };
+}
+
+function genCounting(grade){
+  const maxN = grade===1?6:grade===2?12:grade===3?18:25;
+  const n = randInt(3,maxN);
+  const emoji = shuffle(['🍎','⭐','🐣','🎈','🍪','🌸'])[0];
+  const display = emoji.repeat(n);
+  return makeMCQ(`${display}\n\nHow many ${emojiName(emoji)} are there?`, n, ()=>randInt(Math.max(1,n-4), n+4));
+}
+function emojiName(e){
+  const map = {'🍎':'apples','⭐':'stars','🐣':'chicks','🎈':'balloons','🍪':'cookies','🌸':'flowers'};
+  return map[e]||'items';
+}
+function genNumberPattern(grade){
+  const step = grade<=2 ? 1 : (Math.random()<0.5?1:2);
+  const start = grade===1?randInt(1,10): grade===2?randInt(10,50): grade===3?randInt(50,300):randInt(100,900);
+  const seq = [start, start+step, start+step*2];
+  const answer = start+step*3;
+  return makeMCQ(`${seq.join(', ')}, ?`, answer, ()=>answer + randInt(-3,3));
+}
+function genComparison(grade){
+  const range = grade===1?10: grade===2?100: grade===3?500:1000;
+  let a = randInt(1,range), b = randInt(1,range);
+  while(a===b) b = randInt(1,range);
+  const bigger = Math.max(a,b);
+  return {
+    prompt: `Which number is bigger?\n\n${a}   or   ${b}`,
+    options: [String(a), String(b)],
+    correctIndex: bigger===a?0:1,
+  };
+}
+function genMissingNumber(grade){
+  const range = grade===1?10: grade===2?50: grade===3?200:500;
+  const a = randInt(1,range);
+  const b = randInt(1,range);
+  const sum = a+b;
+  const hideFirst = Math.random()<0.5;
+  const prompt = hideFirst ? `? + ${b} = ${sum}` : `${a} + ? = ${sum}`;
+  const answer = hideFirst ? a : b;
+  return makeMCQ(prompt, answer, ()=>answer+randInt(-5,5));
+}
+
+function genAddition(grade){
+  let a,b;
+  if(grade===1){ a=randInt(1,7); b=randInt(1,7); }
+  else if(grade===2){ a=randInt(10,49); b=randInt(10,49); }
+  else if(grade===3){ a=randInt(100,499); b=randInt(100,499); }
+  else { a=randInt(500,4999); b=randInt(500,4999); }
+  const sum = a+b;
+  return makeMCQ(`${a} + ${b} = ?`, sum, ()=>sum+randInt(-9,9));
+}
+function genSubtraction(grade){
+  let a,b;
+  if(grade===1){ a=randInt(3,10); b=randInt(1,a); }
+  else if(grade===2){ a=randInt(20,90); b=randInt(10,a); }
+  else if(grade===3){ a=randInt(200,900); b=randInt(100,a); }
+  else { a=randInt(1000,9000); b=randInt(500,a); }
+  const diff = a-b;
+  return makeMCQ(`${a} − ${b} = ?`, diff, ()=>diff+randInt(-9,9));
+}
+function genMultiplication(grade){
+  let a,b;
+  if(grade===1){ a=randInt(1,3); b=randInt(1,5); }
+  else if(grade===2){ a=randInt(2,10); b=[2,3,4,5,10][randInt(0,4)]; }
+  else if(grade===3){ a=randInt(11,40); b=randInt(2,9); }
+  else { a=randInt(100,400); b=randInt(2,9); }
+  const prod = a*b;
+  return makeMCQ(`${a} × ${b} = ?`, prod, ()=>prod+randInt(-2,2)*(grade>=3?10:1)+randInt(-3,3));
+}
+function genDivision(grade){
+  let b, result;
+  if(grade===1){ b=2; result=randInt(1,4); }
+  else if(grade===2){ b=[2,3,4,5,10][randInt(0,4)]; result=randInt(2,10); }
+  else if(grade===3){ b=randInt(2,9); result=randInt(2,12); }
+  else { b=randInt(2,9); result=randInt(10,50); }
+  const a = b*result;
+  if(grade===1){
+    const emoji='🍎'.repeat(a);
+    return makeMCQ(`${emoji}\n\n${a} apples shared equally between ${b} children. How many does each child get?`, result, ()=>result+randInt(-2,2));
+  }
+  return makeMCQ(`${a} ÷ ${b} = ?`, result, ()=>result+randInt(-3,3));
+}
+function genWordProblem(grade){
+  const templates = [
+    (a,b)=>[`A farmer has ${a} chickens and buys ${b} more. How many chickens now?`, a+b],
+    (a,b)=>[`There are ${a} candies. ${b} are eaten. How many candies are left?`, a-b],
+    (a,b)=>[`Each box has ${a} pencils. There are ${b} boxes. How many pencils in total?`, a*b],
+  ];
+  let a,b,idx;
+  if(grade<=2){ a=randInt(3,20); b=randInt(2,10); idx=randInt(0,1); }
+  else { a=randInt(10,80); b=randInt(2,12); idx = randInt(0,2); }
+  if(idx===2 && grade<=2){ a=randInt(2,9); b=randInt(2,6); }
+  if(idx===1 && a<b) [a,b]=[b,a];
+  const [text, answer] = templates[idx](a,b);
+  return makeMCQ(text, answer, ()=>answer+randInt(-6,6));
+}
+function genMixed(grade){
+  // e.g. 25 + 10 x 2 style, only grade 3/4
+  const a = randInt(2,20), b=randInt(2,12), c=randInt(2,9);
+  const answer = a + b*c;
+  return makeMCQ(`${a} + ${b} × ${c} = ?`, answer, ()=>a+b*c+randInt(-10,10));
+}
+
+function genForLevel(levelId, grade){
+  switch(levelId){
+    case 'village': {
+      if(grade===1){
+        return shuffle([genCounting, genComparison, genMissingNumber])[0](grade);
+      } else {
+        return shuffle([genNumberPattern, genComparison, genMissingNumber])[0](grade);
+      }
+    }
+    case 'addition':
+      return Math.random()<0.75 || grade<=2 ? genAddition(grade) : genWordProblem(grade);
+    case 'subtraction':
+      return Math.random()<0.75 || grade<=2 ? genSubtraction(grade) : genWordProblem(grade);
+    case 'multiplication':
+      return Math.random()<0.7 ? genMultiplication(grade) : genWordProblem(grade);
+    case 'division':
+      return Math.random()<0.7 ? genDivision(grade) : genWordProblem(grade);
+    case 'boss': {
+      const pool = grade===1 ? [genCounting, genAddition, genSubtraction, genMultiplication]
+                 : grade===2 ? [genAddition, genSubtraction, genMultiplication, genDivision, genWordProblem]
+                 : [genAddition, genSubtraction, genMultiplication, genDivision, genWordProblem, genMixed, genMissingNumber];
+      return shuffle(pool)[0](grade);
+    }
+    default:
+      return genAddition(grade);
+  }
+}
+
+const optionColors = ['blue','green','red'];
+
+/* ============== RENDER ROUTER ============== */
+const app = document.getElementById('app');
+
+function render(){
+  if(!state.grade){ renderStart(); }
+  else if(!state.currentLevel){ renderMap(); }
+  else if(state.currentLevel === '__complete__'){ renderLevelComplete(); }
+  else if(state.currentLevel === '__ending__'){ renderEnding(); }
+  else { renderLevelPlay(); }
+}
+
+/* ---------- START SCREEN ---------- */
+function renderStart(){
+  app.innerHTML = `
+    <div class="castle-emoji">🏰</div>
+    <h1 class="title-main">MATH KINGDOM</h1>
+    <div class="title-sub">👑 Save the Princess 👑</div>
+    <div class="panel">
+      <h2 style="text-align:center;">Choose Your Grade</h2>
+      <div class="grade-grid" id="gradeGrid">
+        <button class="grade-btn g1" data-g="1"><span class="grade-icon">🟢</span>Grade 1</button>
+        <button class="grade-btn g2" data-g="2"><span class="grade-icon">🔵</span>Grade 2</button>
+        <button class="grade-btn g3" data-g="3"><span class="grade-icon">🟡</span>Grade 3</button>
+        <button class="grade-btn g4" data-g="4"><span class="grade-icon">🟣</span>Grade 4</button>
+      </div>
+      <button class="big-btn" id="startBtn" disabled>🎮 Start Adventure</button>
+      <div class="row-icons">
+        <button class="icon-toggle ${state.sound?'':'off'}" id="soundToggle">🔊 Sound ${state.sound?'ON':'OFF'}</button>
+        <button class="icon-toggle ${state.music?'':'off'}" id="musicToggle">🎵 Music ${state.music?'ON':'OFF'}</button>
+      </div>
+    </div>
+    <footer>✨ Made by Mrs. Shabnam Naz Lakho ✨</footer>
+  `;
+  let picked = null;
+  document.querySelectorAll('.grade-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      playClick();
+      document.querySelectorAll('.grade-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      picked = parseInt(btn.dataset.g,10);
+      document.getElementById('startBtn').disabled = false;
+    });
+  });
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    ensureAudio(); playClick();
+    state.grade = picked;
+    saveState();
+    render();
+  });
+  document.getElementById('soundToggle').addEventListener('click', ()=>{
+    ensureAudio();
+    state.sound = !state.sound; saveState(); playClick(); render();
+  });
+  document.getElementById('musicToggle').addEventListener('click', ()=>{
+    ensureAudio();
+    state.music = !state.music; saveState(); toggleMusicPlayback(); render();
+  });
+}
+
+/* ---------- KINGDOM MAP ---------- */
+function gradeColor(){
+  return {1:'var(--grade1)',2:'var(--grade2)',3:'var(--grade3)',4:'var(--grade4)'}[state.grade];
+}
+function renderMap(){
+  const nodesHtml = LEVELS.map(lv=>{
+    const unlocked = state.unlocked[lv.id];
+    return `
+      <div class="map-node ${unlocked?'':'locked'}" data-id="${lv.id}">
+        <div class="node-emoji">${lv.emoji}</div>
+        <div class="node-info">
+          <div class="node-title">${lv.title}</div>
+          <div class="node-sub">${lv.id==='boss'?'Defeat the Villain!':'Solve maths challenges'}</div>
+        </div>
+        <div class="lock-badge">${unlocked?'🔓':'🔒'}</div>
+      </div>
+    `;
+  }).join('');
+  app.innerHTML = `
+    <div class="hud">
+      <span>🟢🔵🟡🟣 Grade ${state.grade}</span>
+      <span class="stars">⭐ ${state.totalStars}</span>
+      <span class="coins">🪙 ${state.totalCoins}</span>
+      <button class="hud-back" id="changeGrade">🏠</button>
+    </div>
+    <h1 class="title-main" style="font-size:1.6rem;">🗺️ Kingdom Map</h1>
+    <div class="panel">
+      <div class="map-path">${nodesHtml}</div>
+    </div>
+    <footer>✨ Made by Mrs. Shabnam Naz Lakho ✨</footer>
+  `;
+  document.querySelectorAll('.map-node').forEach(node=>{
+    node.addEventListener('click', ()=>{
+      const id = node.dataset.id;
+      if(!state.unlocked[id]) { playWrong(); node.classList.add('shake'); setTimeout(()=>node.classList.remove('shake'),400); return; }
+      playClick();
+      startLevel(id);
+    });
+  });
+  document.getElementById('changeGrade').addEventListener('click', ()=>{
+    playClick();
+    state.grade = null;
+    render();
+  });
+}
+
+/* ---------- LEVEL PLAY ---------- */
+function startLevel(id){
+  state.currentLevel = id;
+  state.qIndex = 0;
+  state.lives = 3;
+  state.levelStars = 0;
+  state.levelCoins = 0;
+  const total = id==='boss' ? BOSS_QUESTIONS : QUESTIONS_PER_LEVEL;
+  state.questions = [];
+  for(let i=0;i<total;i++){
+    state.questions.push(genForLevel(id, state.grade));
+  }
+  render();
+}
+
+function guideForLevel(id){
+  const guides = {
+    village: '🦜',
+    addition: '🦜',
+    subtraction: '🦜',
+    multiplication: '🦜',
+    division: '🦜',
+    boss: '👹',
+  };
+  return guides[id]||'🦜';
+}
+function introLineForLevel(id, qIndex){
+  if(qIndex>0) return null;
+  const lines = {
+    village: '“Welcome, Hero! The villagers need your counting skills!”',
+    addition: '“The Addition Forest is full of magical numbers. Can you find the correct answer?”',
+    subtraction: '“Solve the question to open the gate!”',
+    multiplication: '“Climb the mountain, one correct answer at a time!”',
+    division: '“Somewhere in this cave, treasure clues await. Solve to find them!”',
+    boss: '“You think you can save the Princess? Let\'s see if you can solve my Maths challenges!”',
+  };
+  return lines[id];
+}
+
+function renderLevelPlay(){
+  const lv = LEVELS.find(l=>l.id===state.currentLevel);
+  const total = state.questions.length;
+  const q = state.questions[state.qIndex];
+  const intro = introLineForLevel(state.currentLevel, state.qIndex);
+  const dots = state.questions.map((_,i)=>{
+    let cls='dot';
+    if(i<state.qIndex) cls+=' done';
+    else if(i===state.qIndex) cls+=' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="hud">
+      <span class="lives">${'❤️'.repeat(state.lives)}${'🖤'.repeat(3-state.lives)}</span>
+      <span class="stars">⭐ ${state.levelStars}</span>
+      <span class="coins">🪙 ${state.levelCoins}</span>
+      <button class="hud-back" id="mapBtn">🗺️</button>
+    </div>
+    <h1 class="title-main" style="font-size:1.4rem;">${lv.emoji} ${lv.title}</h1>
+    <div class="progress-dots">${dots}</div>
+    <div class="panel" id="qPanel">
+      <div class="guide-bubble">
+        <div class="guide-emoji">${guideForLevel(state.currentLevel)}</div>
+        <div class="bubble" id="guideText">${intro ? intro : 'Solve this one!'}</div>
+      </div>
+      <div class="question-box" id="questionBox" style="white-space:pre-line;">${q.prompt}</div>
+      <div class="options-grid" id="optionsGrid">
+        ${q.options.map((opt,i)=>`<button class="option-btn ${optionColors[i%3]}" data-i="${i}">${opt}</button>`).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('mapBtn').addEventListener('click', ()=>{
+    playClick();
+    state.currentLevel = null;
+    render();
+  });
+  document.querySelectorAll('.option-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> handleAnswer(parseInt(btn.dataset.i,10), q));
+  });
+}
+
+function handleAnswer(chosenIndex, q){
+  ensureAudio();
+  const buttons = document.querySelectorAll('.option-btn');
+  buttons.forEach(b=>b.disabled=true);
+  const guideText = document.getElementById('guideText');
+  const isCorrect = chosenIndex === q.correctIndex;
+
+  if(isCorrect){
+    buttons[chosenIndex].classList.add('correct','pop');
+    playCorrect();
+    state.levelStars += 1;
+    state.levelCoins += 10;
+    state.totalStars += 1;
+    state.totalCoins += 10;
+    guideText.textContent = shuffle(['“Amazing! You\'re a Math Star!”','“Great job, Hero!”','“Fantastic! Onward!”'])[0];
+    saveState();
+    setTimeout(()=> advanceQuestion(), 900);
+  } else {
+    buttons[chosenIndex].classList.add('wrong');
+    buttons[q.correctIndex].classList.add('correct');
+    document.getElementById('qPanel').classList.add('shake');
+    playWrong();
+    state.lives -= 1;
+    guideText.textContent = '🦜 “Almost! Think carefully and try again!”';
+    setTimeout(()=>{
+      document.getElementById('qPanel').classList.remove('shake');
+      if(state.lives<=0){
+        renderLevelFailed();
+      } else {
+        advanceQuestion();
+      }
+    }, 1100);
+  }
+}
+
+function advanceQuestion(){
+  state.qIndex += 1;
+  if(state.qIndex >= state.questions.length){
+    finishLevel();
+  } else {
+    render();
+  }
+}
+
+function renderLevelFailed(){
+  const lv = LEVELS.find(l=>l.id===state.currentLevel);
+  app.innerHTML = `
+    <div class="panel center-text">
+      <div style="font-size:3rem;">💫</div>
+      <h2>Out of Lives!</h2>
+      <p>${lv.emoji} <b>${lv.title}</b> ne is baar tumhein rok diya. Koi baat nahi, dobara koshish karo!</p>
+      <div class="stat-row">
+        <div class="stat-item"><span class="num">⭐ ${state.levelStars}</span>Stars Earned</div>
+        <div class="stat-item"><span class="num">🪙 ${state.levelCoins}</span>Coins Earned</div>
+      </div>
+      <button class="big-btn" id="retryBtn">🔁 Try Again</button>
+      <button class="big-btn" id="mapBtn2" style="background:linear-gradient(180deg,#888,#555);box-shadow:0 6px 0 #333;">🗺️ Back to Map</button>
+    </div>
+  `;
+  document.getElementById('retryBtn').addEventListener('click', ()=>{
+    playClick();
+    startLevel(state.currentLevel);
+  });
+  document.getElementById('mapBtn2').addEventListener('click', ()=>{
+    playClick();
+    state.currentLevel = null;
+    render();
+  });
+}
+
+function finishLevel(){
+  const lv = LEVELS.find(l=>l.id===state.currentLevel);
+  // unlock next
+  const idx = LEVELS.findIndex(l=>l.id===lv.id);
+  if(idx>=0 && idx+1<LEVELS.length){
+    state.unlocked[LEVELS[idx+1].id] = true;
+  }
+  saveState();
+  if(lv.id==='boss'){
+    state.currentLevel = '__ending__';
+  } else {
+    state.currentLevel = '__complete__';
+    state._justFinished = lv.id;
+  }
+  render();
+}
+
+function renderLevelComplete(){
+  const lvId = state._justFinished;
+  const lv = LEVELS.find(l=>l.id===lvId);
+  const total = lvId==='boss'?BOSS_QUESTIONS:QUESTIONS_PER_LEVEL;
+  playFanfare();
+  app.innerHTML = `
+    <div class="panel center-text">
+      <div style="font-size:3rem;">🎉</div>
+      <h2>Level Complete!</h2>
+      <p>${lv.emoji} <b>${lv.title}</b> cleared!</p>
+      <div class="stat-row">
+        <div class="stat-item"><span class="num">⭐ ${state.levelStars}/${total}</span>Stars</div>
+        <div class="stat-item"><span class="num">🪙 ${state.levelCoins}</span>Coins</div>
+      </div>
+      <button class="big-btn" id="continueBtn">➡️ Continue</button>
+    </div>
+  `;
+  document.getElementById('continueBtn').addEventListener('click', ()=>{
+    playClick();
+    state.currentLevel = null;
+    render();
+  });
+}
+
+function badgeForGrade(){
+  return {1:'🌟 Number Explorer',2:'✖️ Multiplication Master',3:'👑 Math Kingdom Hero',4:'🏆 Princess Saver'}[state.grade] || '🏆 Princess Saver';
+}
+
+function renderEnding(){
+  playFanfare();
+  app.innerHTML = `
+    <div class="panel center-text">
+      <div class="badge-display">👑</div>
+      <h2>YOU SAVED THE PRINCESS!</h2>
+      <p>“Thank you for saving me, Math Hero!” — Princess</p>
+      <div class="stat-row">
+        <div class="stat-item"><span class="num">⭐ ${state.totalStars}</span>Total Stars</div>
+        <div class="stat-item"><span class="num">🪙 ${state.totalCoins}</span>Total Coins</div>
+      </div>
+      <div style="margin:14px 0;font-size:1.3rem;font-weight:800;color:var(--gold-dark);">
+        🏅 ${badgeForGrade()}
+      </div>
+      <div style="margin:6px 0 14px;font-size:2rem;">👑 GOLDEN MATH HERO BADGE</div>
+      <button class="big-btn" id="playAgainBtn">🔁 Play Again</button>
+    </div>
+    <footer>✨ Made by Mrs. Shabnam Naz Lakho ✨</footer>
+  `;
+  document.getElementById('playAgainBtn').addEventListener('click', ()=>{
+    playClick();
+    const keepGrade = state.grade;
+    state = defaultState();
+    state.grade = null;
+    saveState();
+    render();
+  });
+}
+
+/* ============== INIT ============== */
+render();
+</script>
+</body>
+</html>
